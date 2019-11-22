@@ -50,6 +50,23 @@ def _exchange_code_with_token(code):
     r.raise_for_status();
     return r.json();
 
+def _save_orcid_info(user_id, orcid_identifier, access_token, refresh_token, associated_at, expires_at):
+    orcid_user = model.Session.query(ext_model.OrcidUser).filter_by(user_id=user_id).one_or_none();
+    if orcid_user:
+        # Update record
+        orcid_user.orcid_identifier = orcid_identifier; # Q: is this supposed to be updated?
+    else:
+        # Add record
+        orcid_user = ext_model.OrcidUser(user_id, orcid_identifier);
+        model.Session.add(orcid_user);
+    
+    orcid_user.access_token = access_token;
+    orcid_user.refresh_token = refresh_token;
+    orcid_user.associated_at = associated_at;
+    orcid_user.expires_at = expires_at;
+    
+    model.Session.commit();
+
 def callback():
     logger.info('callback(): user=%s request.params=%s', c.userobj, request.params)
     try:
@@ -58,22 +75,28 @@ def callback():
         return Response('Not authorized', status=403, content_type='text/plain');
     
     if not ('orcid' in session) or not ('state' in session['orcid']):
-        return Response('No ORCID state in session!', status=400, content_type='text/plain');
+        return Response('No state for this authorization request!', status=403, content_type='text/plain');
     
-    now = time.time();
-    state, expires_on = session['orcid']['state'];
-    if expires_on < now:
+    now = long(time.time());
+    state, state_expires_at = session['orcid']['state'];
+    if state_expires_at < now:
         return Response('The authorization request has expired!', status=400, content_type='text/plain');
     if request.params.get('state') != state:
         return Response('The request state is invalid', status=400, content_type='text/plain');
     
     authorization_code = request.params.get('code');
     r = _exchange_code_with_token(authorization_code);
-    logger.info('Acquired token for user %s: orcid_identifier=%s access_token=%s refresh_token=%s', 
-        c.user, r['orcid'], r['access_token'], r['refresh_token']);
+    orcid_identifier = r['orcid'];
+    access_token = r['access_token'];
+    refresh_token = r['refresh_token'];
+    access_expires_at = now + long(r['expires_in']);
+    logger.info('Acquired token for user %s: orcid_identifier=%s access_token=%s', 
+        c.user, orcid_identifier, access_token);
 
-    # TODO Assosicate user with the orcid id
-    #ext_model.user_extra_create('username', 'orcid_id', 'value')
+    # Assosicate user with ORCID information (identifier and access tokens)
+
+    _save_orcid_info(
+        c.userobj.id, orcid_identifier, access_token, refresh_token, now, access_expires_at);
    
     # Redirect to return page
     

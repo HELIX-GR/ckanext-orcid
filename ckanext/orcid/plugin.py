@@ -15,23 +15,23 @@ class OrcidPlugin(plugins.SingletonPlugin):
     plugins.implements(plugins.ITemplateHelpers)
     plugins.implements(plugins.IAuthFunctions, inherit=True)
 
-
     # IConfigurable
 
     def configure(self, config):
-        # setup extra user metadata table
+        # Setup database table(s)
         ext_model.setup()
 
     # ITemplateHelpers    
     
     def get_helpers(self):
-        return {'get_user_extra': ext_helpers.get_user_extra}
+        return {
+            'orcid_user_info': ext_helpers.get_orcid_user_info,
+        };
 
      # IAuthFunctions 
     
     def get_auth_functions(self):
-        '''Define new authorization checks or replace existing ones
-        '''
+        '''Define new authorization checks or replace existing ones'''
         funcs = {
             'orcid_callback': ext_auth.orcid_callback_auth,
             'orcid_authorize': ext_auth.orcid_authorize_auth,
@@ -41,7 +41,7 @@ class OrcidPlugin(plugins.SingletonPlugin):
     # IBlueprint 
 
     def get_blueprint(self):
-        u'''Return a Flask Blueprint object to be registered by the app.'''
+        '''Return a Flask Blueprint object to be registered by the app.'''
 
         # Create Blueprint for plugin
         blueprint = Blueprint(self.name, self.__module__)
