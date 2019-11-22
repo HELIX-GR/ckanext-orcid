@@ -69,7 +69,8 @@ def callback():
     
     authorization_code = request.params.get('code');
     r = _exchange_code_with_token(authorization_code);
-    logger.info('Acquired access token: %s', r);
+    logger.info('Acquired token for user %s: orcid_identifier=%s access_token=%s refresh_token=%s', 
+        c.user, r['orcid'], r['access_token'], r['refresh_token']);
 
     # TODO Assosicate user with the orcid id
     #ext_model.user_extra_create('username', 'orcid_id', 'value')
