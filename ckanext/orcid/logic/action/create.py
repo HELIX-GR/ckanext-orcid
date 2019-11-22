@@ -5,7 +5,7 @@ _check_access = logic.check_access
 
 def user_extra_create(context, data_dict):
     '''
-    Creates an  user extra in database
+    Creates an bunch of user extras (key-value pairs) in database
     :param context:
     :param data_dict: contains 'user_id' and a list 'extras' with pairs (key,value) to be added in db
     :return: list of user_extra objects added in db

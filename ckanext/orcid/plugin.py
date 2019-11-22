@@ -1,12 +1,12 @@
+from flask import Blueprint
+
 import ckan.plugins as plugins
 import ckan.plugins.toolkit as toolkit
 
-import model as ue_model
-from flask import Blueprint
-
 import ckanext.orcid.logic.auth as ext_auth
 import ckanext.orcid.controllers.user as user_controller
-import ckanext.orcid.helpers as h_orcid
+import ckanext.orcid.helpers as ext_helpers
+import ckanext.orcid.model as ext_model
 
 
 class OrcidPlugin(plugins.SingletonPlugin):
@@ -17,13 +17,15 @@ class OrcidPlugin(plugins.SingletonPlugin):
 
 
     # IConfigurable
+
     def configure(self, config):
         # setup extra user metadata table
-        ue_model.setup()
+        ext_model.setup()
 
     # ITemplateHelpers    
+    
     def get_helpers(self):
-        return {'get_user_extra': h_orcid.get_user_extra}
+        return {'get_user_extra': ext_helpers.get_user_extra}
 
      # IAuthFunctions 
     
@@ -31,8 +33,8 @@ class OrcidPlugin(plugins.SingletonPlugin):
         '''Define new authorization checks or replace existing ones
         '''
         funcs = {
-            'callback': ext_auth.orcid_callback_auth,
-            'authorize': ext_auth.orcid_authorize_auth,
+            'orcid_callback': ext_auth.orcid_callback_auth,
+            'orcid_authorize': ext_auth.orcid_authorize_auth,
         }
         return funcs
 

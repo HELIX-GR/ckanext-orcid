@@ -5,10 +5,6 @@ from os import path
 
 here = path.abspath(path.dirname(__file__))
 
-# Get the long description from the relevant file
-with open(path.join(here, 'README.rst'), encoding='utf-8') as f:
-    long_description = f.read()
-
 setup(
     name='''ckanext-orcid''',
 
@@ -17,15 +13,11 @@ setup(
     # http://packaging.python.org/en/latest/tutorial.html#version
     version='0.0.1',
 
-    description='''An extension to authenticate user with orcid''',
-    long_description=long_description,
+    description='''An extension to associate a user with an orcid identifier''',
+    long_description='''An extension to associate a user with an orcid identifier''',
 
     # The project's main homepage.
-    url='https://github.com//ckanext-orcid',
-
-    # Author details
-    author='''Leonidakis Nikiforos''',
-    author_email='''nikleonidakis@imis.athena-innovation.gr''',
+    url='https://github.com/HELIX-GR/ckanext-orcid',
 
     # Choose your license
     license='AGPL',
@@ -46,7 +38,6 @@ setup(
         'Programming Language :: Python :: 2.7',
     ],
 
-
     # What does your project relate to?
     keywords='''CKAN orcid''',
 
@@ -56,9 +47,7 @@ setup(
     namespace_packages=['ckanext'],
 
     install_requires=[
-      # CKAN extensions should not list dependencies here, but in a separate
-      # ``requirements.txt`` file.
-      #
+      # CKAN extensions should not list dependencies here, but in a separate ``requirements.txt`` file.
       # http://docs.ckan.org/en/latest/extensions/best-practices.html#add-third-party-libraries-to-requirements-txt
     ],
 
