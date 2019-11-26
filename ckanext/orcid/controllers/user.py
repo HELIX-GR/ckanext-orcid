@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 authorize_url = config.get('ckanext.orcid.orcid_authorize_url');
 token_url = config.get('ckanext.orcid.orcid_token_url');
 userinfo_url = config.get('ckanext.orcid.orcid_userinfo_url');
+authorization_scope = config.get('ckanext.orcid.scope');
 client_id = config.get('ckanext.orcid.client_id');
 client_secret = config.get('ckanext.orcid.client_secret');
 
@@ -90,8 +91,9 @@ def callback():
     access_token = r['access_token'];
     refresh_token = r['refresh_token'];
     access_expires_at = now + long(r['expires_in']);
-    logger.info('Acquired token for user %s: orcid_identifier=%s access_token=%s', 
-        c.user, orcid_identifier, access_token);
+    scope = r['scope'];
+    logger.info('Acquired token for user %s: orcid_identifier=%s access_token=%s scope=%r', 
+        c.user, orcid_identifier, access_token, scope);
 
     # Assosicate user with ORCID information (identifier and access tokens)
 
@@ -104,7 +106,7 @@ def callback():
     try:
         return_url = session.pop('return_to');
     except KeyError as ex:
-        return_url = '/'
+        return_url = '/user/' + urllib.quote(c.user);
     
     logger.info("callback(): Redirecting to %s", return_url)
     return toolkit.redirect_to(return_url);
@@ -128,7 +130,7 @@ def authorize():
         'client_id': client_id,
         'state': state,
         'redirect_uri': toolkit.url_for('orcid.callback', _external=True),
-        'scope': '/authenticate',
+        'scope': authorization_scope, 
     };
     redirect_url = urlparse.urljoin(authorize_url, '?' + urllib.urlencode(p))
     
