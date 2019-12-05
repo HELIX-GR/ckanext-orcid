@@ -31,8 +31,8 @@ ttl_for_state = 600; # in seconds
 def _make_context(**opts):
     ctx = { 
         'model': model, 
-        'session': model.Session, 
-        'api_version': 3 
+        'session': model.Session,
+        'auth_user_obj': c.userobj
     }
     if opts:
         ctx.update(opts)
