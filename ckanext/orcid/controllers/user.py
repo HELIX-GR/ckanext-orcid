@@ -106,7 +106,7 @@ def callback():
     try:
         return_url = session.pop('return_to');
     except KeyError as ex:
-        return_url = '/user/' + urllib.quote(c.user);
+        return_url = toolkit.url_for('user.read', id=c.user);
     
     logger.info("callback(): Redirecting to %s", return_url)
     return toolkit.redirect_to(return_url);
