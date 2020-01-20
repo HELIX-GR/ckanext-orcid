@@ -20,6 +20,7 @@ check_access = toolkit.check_access
 
 logger = logging.getLogger(__name__)
 
+api_url = "https://{0:s}".format(config.get("ckanext.orcid.orcid_api_host"));
 authorize_url = config.get('ckanext.orcid.orcid_authorize_url');
 token_url = config.get('ckanext.orcid.orcid_token_url');
 userinfo_url = config.get('ckanext.orcid.orcid_userinfo_url');
@@ -48,6 +49,15 @@ def _exchange_code_with_token(code):
         'client_secret': client_secret,
     };
     r = requests.post(token_url, data=p, headers={'accept': 'application/json'});
+    r.raise_for_status();
+    return r.json();
+
+def _get_person_info(orcid_identifier, access_token):
+    url = urlparse.urljoin(api_url, "/v2.0/{0:s}/person".format(orcid_identifier));
+    r = requests.get(url, headers={
+        'accept': 'application/json',
+        'authorization': 'Bearer {0:s}'.format(access_token),
+    });
     r.raise_for_status();
     return r.json();
 
@@ -100,6 +110,10 @@ def callback():
     _save_orcid_info(
         c.userobj.id, orcid_identifier, access_token, refresh_token, now, access_expires_at);
    
+    # Retrieve person info
+
+    person_info = _get_person_info(orcid_identifier, access_token);
+    
     # Redirect to return page
     
     return_url = None
