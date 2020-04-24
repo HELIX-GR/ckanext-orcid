@@ -16,7 +16,7 @@ def get_orcid_user_info(user_id):
     if orcid_user:
         return {
             'id': orcid_user.orcid_identifier,
-            'url': 'http://{0:s}/{1:s}'.format(orcid_host, orcid_user.orcid_identifier),
+            'url': 'https://{0:s}/{1:s}'.format(orcid_host, orcid_user.orcid_identifier),
         };
     else:
         return None
