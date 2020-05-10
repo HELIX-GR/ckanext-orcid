@@ -1,9 +1,7 @@
 import logging
-import ckan.logic as logic
-import ckan.model as model
-from ckan.common import _, c
 import ckan.plugins.toolkit as toolkit
-import ckanext.orcid.model as ext_model
+
+from ckanext.orcid.repo import get_orcid_for_user
 
 logger = logging.getLogger(__name__)
 
@@ -12,7 +10,7 @@ config = toolkit.config;
 orcid_host = config.get('ckanext.orcid.orcid_host');
 
 def get_orcid_user_info(user_id):
-    orcid_user = model.Session.query(ext_model.OrcidUser).filter_by(user_id=user_id).one_or_none();
+    orcid_user = get_orcid_for_user(user_id);
     if orcid_user:
         return {
             'id': orcid_user.orcid_identifier,
