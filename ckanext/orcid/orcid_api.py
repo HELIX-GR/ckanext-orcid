@@ -8,25 +8,8 @@ logger = logging.getLogger(__name__)
 config = toolkit.config
 
 api_url = "https://{0:s}".format(config.get("ckanext.orcid.orcid_api_host"));
-token_url = config.get('ckanext.orcid.orcid_token_url');
 userinfo_url = config.get('ckanext.orcid.orcid_userinfo_url');
-client_id = config.get('ckanext.orcid.client_id');
-client_secret = config.get('ckanext.orcid.client_secret');
 
-
-def exchange_code_with_token(code):
-    '''Exchange the grant code with an access token (part of OAuth2 authorization code flow)
-    '''
-    p = { 
-        'code': code, 
-        'grant_type': 'authorization_code', 
-        'redirect_uri': toolkit.url_for('orcid.callback', _external=True), 
-        'client_id': client_id, 
-        'client_secret': client_secret,
-    };
-    r = requests.post(token_url, data=p, headers={'accept': 'application/json'});
-    r.raise_for_status();
-    return r.json();
 
 def get_user_info(access_token):
     '''Get basic user info (part of OIDC standard)

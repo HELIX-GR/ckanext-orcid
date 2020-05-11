@@ -5,9 +5,6 @@ import ckanext.orcid.model as ext_model
 
 logger = logging.getLogger(__name__)
 
-config = toolkit.config;
-
-orcid_host = config.get('ckanext.orcid.orcid_host');
 
 def save_orcid_for_user(user_id, orcid_identifier, access_token, refresh_token, associated_at, expires_at):
     orcid_user = model.Session.query(ext_model.OrcidUser).filter_by(user_id=user_id).one_or_none();
