@@ -21,6 +21,7 @@ check_access = toolkit.check_access
 
 logger = logging.getLogger(__name__)
 
+site_title = config.get('ckan.site_title');
 authorize_url = config.get('ckanext.orcid.orcid_authorize_url');
 token_url = config.get('ckanext.orcid.orcid_token_url');
 authorization_scope = config.get('ckanext.orcid.scope');
@@ -91,9 +92,11 @@ def callback():
 
     person_info = get_person_info(orcid_identifier, access_token);
     researcher_urls = person_info['researcher-urls']['researcher-url'];
-    logger.debug('callback(): researcher-urls: %s', researcher_urls);
+    logger.debug('callback(): person.researcher-urls: %s', researcher_urls);
     if not filter(lambda x: x['url-name'] == site_title, researcher_urls):
-        post_researcher_url(orcid_identifier, access_token);
+        post_researcher_url(
+            orcid_identifier, access_token, 
+            site_title, toolkit.url_for('user.read', id=c.user, _external=True));
     
     # Redirect to return page
     

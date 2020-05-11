@@ -7,7 +7,6 @@ logger = logging.getLogger(__name__)
 
 config = toolkit.config
 
-site_title = config.get('ckan.site_title');
 api_url = "https://{0:s}".format(config.get("ckanext.orcid.orcid_api_host"));
 userinfo_url = config.get('ckanext.orcid.orcid_userinfo_url');
 
@@ -33,13 +32,11 @@ def get_person_info(orcid_identifier, access_token):
     r.raise_for_status();
     return r.json();
 
-def post_researcher_url(orcid_identifier, access_token):
+def post_researcher_url(orcid_identifier, access_token, url_name, url_value):
     url = urlparse.urljoin(api_url, "/v2.0/{0:s}/researcher-urls".format(orcid_identifier));
     data = {
-        'url-name': site_title,
-        'url': {
-            'value': toolkit.url_for('user.read', id=c.user, _external=True),
-        },
+        'url-name': url_name,
+        'url': { 'value': url_value },
     };
     r = requests.post(url, json=data, headers={
         'accept': 'application/json',
