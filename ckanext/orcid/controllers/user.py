@@ -12,7 +12,8 @@ import ckan.plugins.toolkit as toolkit
 import ckan.logic as logic
 from ckan.common import _, c, session
 
-import ckanext.orcid.model as ext_model
+from ckanext.orcid.repo import save_orcid_for_user
+from ckanext.orcid.orcid_api import exchange_code_with_token, get_person_info, post_researcher_url
 
 config = toolkit.config
 request = toolkit.request
@@ -20,14 +21,9 @@ check_access = toolkit.check_access
 
 logger = logging.getLogger(__name__)
 
-site_title = config.get('ckan.site_title');
-api_url = "https://{0:s}".format(config.get("ckanext.orcid.orcid_api_host"));
 authorize_url = config.get('ckanext.orcid.orcid_authorize_url');
-token_url = config.get('ckanext.orcid.orcid_token_url');
-userinfo_url = config.get('ckanext.orcid.orcid_userinfo_url');
 authorization_scope = config.get('ckanext.orcid.scope');
 client_id = config.get('ckanext.orcid.client_id');
-client_secret = config.get('ckanext.orcid.client_secret');
 
 ttl_for_state = 600; # in seconds
 
@@ -40,60 +36,6 @@ def _make_context(**opts):
     if opts:
         ctx.update(opts)
     return ctx
-
-def _exchange_code_with_token(code):
-    p = { 
-        'code': code, 
-        'grant_type': 'authorization_code', 
-        'redirect_uri': toolkit.url_for('orcid.callback', _external=True), 
-        'client_id': client_id, 
-        'client_secret': client_secret,
-    };
-    r = requests.post(token_url, data=p, headers={'accept': 'application/json'});
-    r.raise_for_status();
-    return r.json();
-
-def _get_person_info(orcid_identifier, access_token):
-    url = urlparse.urljoin(api_url, "/v2.0/{0:s}/person".format(orcid_identifier));
-    r = requests.get(url, headers={
-        'accept': 'application/json',
-        'authorization': 'Bearer {0:s}'.format(access_token),
-    });
-    r.raise_for_status();
-    return r.json();
-
-def _post_researcher_url(orcid_identifier, access_token):
-    url = urlparse.urljoin(api_url, "/v2.0/{0:s}/researcher-urls".format(orcid_identifier));
-    data = {
-        'url-name': site_title,
-        'url': {
-            'value': toolkit.url_for('user.read', id=c.user, _external=True),
-        },
-    };
-    r = requests.post(url, json=data, headers={
-        'accept': 'application/json',
-        'content-type': 'application/json',
-        'authorization': 'Bearer {0:s}'.format(access_token),
-    });
-    r.raise_for_status();
-    return 
-
-def _save_orcid_info(user_id, orcid_identifier, access_token, refresh_token, associated_at, expires_at):
-    orcid_user = model.Session.query(ext_model.OrcidUser).filter_by(user_id=user_id).one_or_none();
-    if orcid_user:
-        # Update record
-        orcid_user.orcid_identifier = orcid_identifier; # Q: is this supposed to be updated?
-    else:
-        # Add record
-        orcid_user = ext_model.OrcidUser(user_id, orcid_identifier);
-        model.Session.add(orcid_user);
-    
-    orcid_user.access_token = access_token;
-    orcid_user.refresh_token = refresh_token;
-    orcid_user.associated_at = associated_at;
-    orcid_user.expires_at = expires_at;
-    
-    model.Session.commit();
 
 def callback():
     logger.info('callback(): user=%s request.params=%s', c.userobj, request.params)
@@ -113,7 +55,7 @@ def callback():
         return Response('The request state is invalid', status=400, content_type='text/plain');
     
     authorization_code = request.params.get('code');
-    r = _exchange_code_with_token(authorization_code);
+    r = exchange_code_with_token(authorization_code);
     orcid_identifier = r['orcid'];
     access_token = r['access_token'];
     refresh_token = r['refresh_token'];
@@ -124,16 +66,17 @@ def callback():
 
     # Assosicate user with ORCID information (identifier and access tokens)
 
-    _save_orcid_info(
+    save_orcid_for_user(
         c.userobj.id, orcid_identifier, access_token, refresh_token, now, access_expires_at);
    
-    # Retrieve person info. Update researcher URL with user page in this CKAN catalog
+    # Fetch person info (ORCID member API)). 
+    # Update researcher URL with user page in this CKAN catalog
 
-    person_info = _get_person_info(orcid_identifier, access_token);
+    person_info = get_person_info(orcid_identifier, access_token);
     researcher_urls = person_info['researcher-urls']['researcher-url'];
     logger.debug('callback(): researcher-urls: %s', researcher_urls);
     if not filter(lambda x: x['url-name'] == site_title, researcher_urls):
-        _post_researcher_url(orcid_identifier, access_token);
+        post_researcher_url(orcid_identifier, access_token);
     
     # Redirect to return page
     
@@ -176,4 +119,4 @@ def authorize():
     # Redirect
     logger.info('authorize(): Redirecting to %s', redirect_url);
     return toolkit.redirect_to(redirect_url);
-    
+ 

@@ -19,4 +19,5 @@ ckanext.orcid.orcid_userinfo_url = https://sandbox.orcid.org/oauth/userinfo
 ckanext.orcid.scope = /authenticate /person/update
 ckanext.orcid.client_id = APP-123
 ckanext.orcid.client_secret = secret
+ckanext.orcid.check_if_access_token_is_revoked = True
 ```
