@@ -13,7 +13,7 @@ import ckan.logic as logic
 from ckan.common import _, c, session
 
 from ckanext.orcid.repo import save_orcid_for_user
-from ckanext.orcid.orcid_api import exchange_code_with_token, get_person_info, post_researcher_url
+from ckanext.orcid.orcid_api import get_person_info, post_researcher_url
 
 config = toolkit.config
 request = toolkit.request
@@ -22,8 +22,10 @@ check_access = toolkit.check_access
 logger = logging.getLogger(__name__)
 
 authorize_url = config.get('ckanext.orcid.orcid_authorize_url');
+token_url = config.get('ckanext.orcid.orcid_token_url');
 authorization_scope = config.get('ckanext.orcid.scope');
 client_id = config.get('ckanext.orcid.client_id');
+client_secret = config.get('ckanext.orcid.client_secret');
 
 ttl_for_state = 600; # in seconds
 
@@ -36,6 +38,21 @@ def _make_context(**opts):
     if opts:
         ctx.update(opts)
     return ctx
+
+def _exchange_code_with_token(code):
+    '''Exchange the grant code with an access token (part of OAuth2 authorization code flow)
+    '''
+    p = { 
+        'code': code, 
+        'grant_type': 'authorization_code', 
+        'redirect_uri': toolkit.url_for('orcid.callback', _external=True), 
+        'client_id': client_id, 
+        'client_secret': client_secret,
+    };
+    r = requests.post(token_url, data=p, headers={'accept': 'application/json'});
+    r.raise_for_status();
+    return r.json();
+
 
 def callback():
     logger.info('callback(): user=%s request.params=%s', c.userobj, request.params)
@@ -55,7 +72,7 @@ def callback():
         return Response('The request state is invalid', status=400, content_type='text/plain');
     
     authorization_code = request.params.get('code');
-    r = exchange_code_with_token(authorization_code);
+    r = _exchange_code_with_token(authorization_code);
     orcid_identifier = r['orcid'];
     access_token = r['access_token'];
     refresh_token = r['refresh_token'];
