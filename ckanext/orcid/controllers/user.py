@@ -46,7 +46,7 @@ def _exchange_code_with_token(code):
     p = { 
         'code': code, 
         'grant_type': 'authorization_code', 
-        'redirect_uri': toolkit.url_for('orcid.callback', _external=True), 
+        'redirect_uri': config.get('ckan.site_url') + '/orcid/callback', 
         'client_id': client_id, 
         'client_secret': client_secret,
     };
@@ -127,7 +127,7 @@ def authorize():
         'response_type': 'code',
         'client_id': client_id,
         'state': state,
-        'redirect_uri': toolkit.url_for('orcid.callback', _external=True),
+        'redirect_uri': config.get('ckan.site_url') + '/orcid/callback', 
         'scope': authorization_scope, 
     };
     redirect_url = urlparse.urljoin(authorize_url, '?' + urllib.urlencode(p))
